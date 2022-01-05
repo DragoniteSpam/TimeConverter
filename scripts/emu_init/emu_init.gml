@@ -1,6 +1,5 @@
 // Emu (c) 2020 @dragonitespam
 // See the Github wiki for documentation: https://github.com/DragoniteSpam/Documentation/wiki/Emu
-scribble_init("emu", "fnt_emu_default", true);
 
 #region some macros which you may want to set
 #macro EMU_COLOR_BACK                   0x1f1f1f
@@ -27,26 +26,50 @@ scribble_init("emu", "fnt_emu_default", true);
 #macro EMU_INPUT_BLINKING_SPEED         800
 #macro EMU_KEY_REPEAT_DELAY             60
 #macro EMU_KEY_REPEAT_RATE              2
+
+#macro EMU_DEFAULT_FONT                 "fnt_emu_default"
 #endregion
+
+scribble_font_set_default(EMU_DEFAULT_FONT);
 
 #region macros which it is not very useful to touch
-#macro EMU_AUTO                         undefined
-#macro EmuOverlay                       (_emu_get_overlay())
+#macro EMU_AUTO                         ptr(0)
+#macro EMU_INLINE                       ptr(1)
+#macro EmuOverlay                       _emu_get_overlay()
+#macro EmuActiveElement                 _emu_active_element()
 
 function _emu_get_overlay() {
-    static _overlay = new EmuCore(0, 0, window_get_width(), window_get_height());
-    return _overlay;
+    static EmuCoreOverlay = function() : EmuCore(0, 0, 1, 1, "overlay") constructor {
+        static baseRender = self.Render;
+        static Render = function() {
+            self.width = window_get_width();
+            self.height = window_get_height();
+            self.baseRender(0, 0);
+        };
+        
+        static Pop = function() {
+            array_delete(self.contents, array_length(self.contents) - 1, 1);
+            _emu_active_element(pointer_null);
+        };
+    };
+    static inst = new EmuCoreOverlay();
+    return inst;
 }
-#macro EmuActiveElement                 (_emu_active_element())
 
-function _emu_active_element() { 
-    static _active = undefined;
-    if (argument_count > 0) {
-        _active = argument[0];
-    }
-    return _active;
+function _emu_active_element(element = undefined) {
+    static inst = undefined;
+    if (element == pointer_null) inst = undefined;
+    else if (element) inst = element;
+    return inst;
 }
 #endregion
+
+function emu_array_search(array, value) {
+    for (var i = 0, n = array_length(array); i < n; i++) {
+        if (array[i] == value) return i;
+    }
+    return -1;
+}
 
 /*
 //For a light mode, although i dont know if you really want to use that:

@@ -6,7 +6,7 @@ global.input_seconds = 0;
 global.input_frames = 0;
 global.input_multiplier = 1;
 
-container = new EmuCore(32, 32, 640, 640);
+container = new EmuCore(32, 32, 640, 640, "");
 
 container.AddContent([
     new EmuText(32, EMU_AUTO, 256, 32, "Input:"),

@@ -1,15 +1,14 @@
 // Emu (c) 2020 @dragonitespam
 // See the Github wiki for documentation: https://github.com/DragoniteSpam/Documentation/wiki/Emu
-function EmuButtonImage(x, y, w, h, sprite, index, blend, alpha, scale_to_fit, callback) : EmuCallback(x, y, w, h, 0, callback) constructor {
+function EmuButtonImage(x, y, w, h, sprite, index, blend, alpha, scale_to_fit, callback) : EmuCallback(x, y, w, h, "", 0, callback) constructor {
     self.sprite = sprite;
     self.blend = blend;
     self.alpha = alpha;
     self.fill = scale_to_fit;
     self.allow_shrink = true;
     
-    self.alignment = fa_center;
-    self.valignment = fa_middle;
-    self.text = "";
+    self.align.h = fa_center;
+    self.align.v = fa_middle;
     
     self.color_hover = function() { return EMU_COLOR_HOVER };
     self.color_back = function() { return EMU_COLOR_BACK };
@@ -17,10 +16,11 @@ function EmuButtonImage(x, y, w, h, sprite, index, blend, alpha, scale_to_fit, c
     
     self.checker_background = false;
     
-    self._surface = noone;
-    self._index = index;
+    self.surface = -1;
+    self.index = index;
     
-    Render = function(base_x, base_y) {
+    static Render = function(base_x, base_y) {
+        self.gc.Clean();
         processAdvancement();
         
         var x1 = x + base_x;
@@ -28,16 +28,10 @@ function EmuButtonImage(x, y, w, h, sprite, index, blend, alpha, scale_to_fit, c
         var x2 = x1 + width;
         var y2 = y1 + height;
         
-        #region draw the image to the _surface
-        if (surface_exists(_surface) && (surface_get_width(_surface) != width || surface_get_height(_surface) != height)) {
-            surface_free(_surface);
-        }
+        #region draw the image to the surface
+        self.surface = self.surfaceVerify(self.surface, self.width, self.height).surface;
         
-        if (!surface_exists(_surface)) {
-            _surface = surface_create(width, height);
-        }
-        
-        surface_set_target(_surface);
+        surface_set_target(surface);
         draw_clear_alpha(c_black, 0);
         draw_sprite_stretched_ext(sprite_nineslice, 1, 0, 0, width, height, self.color_back(), 1);
         if (sprite_exists(sprite)) {
@@ -47,12 +41,13 @@ function EmuButtonImage(x, y, w, h, sprite, index, blend, alpha, scale_to_fit, c
             } else {
                 var scale = fill ? min(max(width / sprite_get_width(sprite), 1), max(height / sprite_get_height(sprite), 1)) : 1;
             }
-            draw_sprite_ext(sprite, _index, width / 2, height / 2, scale, scale, 0, blend, alpha);
+            draw_sprite_ext(sprite, index, width / 2, height / 2, scale, scale, 0, blend, alpha);
         }
         
-        scribble_set_box_align(alignment, valignment);
-        scribble_set_wrap(width, height);
-        scribble_draw(width div 2, height div 2, text);
+        scribble(self.text)
+            .wrap(self.width, self.height)
+            .align(self.align.h, self.align.v)
+            .draw(self.width div 2, self.height div 2);
         surface_reset_target();
         #endregion
         
@@ -66,12 +61,7 @@ function EmuButtonImage(x, y, w, h, sprite, index, blend, alpha, scale_to_fit, c
         }
         
         var back_color = getMouseHover(x1, y1, x2, y2) ? self.color_hover() : (GetInteractive() ? self.color_back() : self.color_disabled());
-        draw_surface_ext(_surface, x1, y1, 1, 1, 0, back_color, 1);
+        draw_surface_ext(surface, x1, y1, 1, 1, 0, back_color, 1);
         draw_sprite_stretched_ext(sprite_nineslice, 0, x1, y1, x2 - x1, y2 - y1, self.color(), 1);
-    }
-    
-    Destroy = function() {
-        if (surface_exists(_surface)) surface_free(_surface);
-        destroyContent();
-    }
+    };
 }
