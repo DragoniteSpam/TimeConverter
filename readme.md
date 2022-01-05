@@ -1,0 +1,1 @@
+Sometimes when I'm doing a video or something, I need to know what a particular duration of time sped up by 25% or whatever is. I could do the math manually, but I'm lazy, so I wrote this to do it for me.
