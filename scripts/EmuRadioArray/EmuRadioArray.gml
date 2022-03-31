@@ -7,16 +7,16 @@ function EmuRadioArray(x, y, w, h, text, value, callback) : EmuCallback(x, y, w,
         }
         
         for (var i = 0; i < array_length(elements); i++) {
-            elements[i] = new emu_radio_array_option(0, height * (1 + i), width, height, elements[i], i);
+            elements[i] = new self.emu_radio_array_option(0, self.height * (1 + i), self.width, self.height, elements[i], i);
         }
         
-        AddContent(elements);
+        self.AddContent(elements);
         return self;
     };
     
     static SetColumns = function(column_capacity, column_width) {
         if (column_capacity <= 0) column_capacity = 10000;
-        for (var i = 0, n = array_length(contents); i < n; i++) {
+        for (var i = 0, n = array_length(self.contents); i < n; i++) {
             var option = self.contents[i];
             option.x = (i div column_capacity) * column_width;
             option.y = self.height * (1 + (i % column_capacity));
@@ -28,7 +28,7 @@ function EmuRadioArray(x, y, w, h, text, value, callback) : EmuCallback(x, y, w,
     
     static GetHeight = function() {
         var maximum_height = self.height;
-        for (var i = 0, n = array_length(contents); i < n; i++) {
+        for (var i = 0, n = array_length(self.contents); i < n; i++) {
             maximum_height = max(self.contents[i].y + self.height, maximum_height);
         }
         return maximum_height;
@@ -36,6 +36,7 @@ function EmuRadioArray(x, y, w, h, text, value, callback) : EmuCallback(x, y, w,
     
     static Render = function(base_x, base_y) {
         self.gc.Clean();
+        self.update_script();
         self.processAdvancement();
         
         var x1 = x + base_x;
@@ -52,7 +53,8 @@ function EmuRadioArray(x, y, w, h, text, value, callback) : EmuCallback(x, y, w,
         
         scribble(self.text)
             .wrap(self.width, self.height)
-            .align(fa_left, fa_middle);
+            .align(fa_left, fa_middle)
+            .draw(tx, ty);
         
         self.renderContents(x1, y1);
     };
@@ -60,9 +62,9 @@ function EmuRadioArray(x, y, w, h, text, value, callback) : EmuCallback(x, y, w,
     static emu_radio_array_option = function(x, y, w, h, text, value) : EmuCore(x, y, w, h, text) constructor {
         self.value = value;
         
-        self.color_active = function() { return EMU_COLOR_RADIO_ACTIVE };
-        self.color_back_disabled = function() { return EMU_COLOR_DISABLED };
-        self.color_back = function() { return EMU_COLOR_BACK };
+        self.color_active = function() { return EMU_COLOR_RADIO_ACTIVE; };
+        self.color_back_disabled = function() { return EMU_COLOR_DISABLED; };
+        self.color_back = function() { return EMU_COLOR_BACK; };
         
         self.sprite_radio = spr_emu_radio;
         

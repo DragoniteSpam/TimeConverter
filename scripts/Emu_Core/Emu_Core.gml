@@ -1,6 +1,6 @@
 // Emu (c) 2020 @dragonitespam
 // See the Github wiki for documentation: https://github.com/DragoniteSpam/Documentation/wiki/Emu
-function EmuCore(x, y, w, h, text) constructor {
+function EmuCore(x, y, w, h, text = "") constructor {
     /// @ignore
     self.x = x;
     /// @ignore
@@ -25,7 +25,7 @@ function EmuCore(x, y, w, h, text) constructor {
     /// @ignore
     self.tooltip = "";               // not used by all element types
     /// @ignore
-    self.color = function() { return EMU_COLOR_DEFAULT };
+    self.color = function() { return EMU_COLOR_DEFAULT; };
     
     /// @ignore
     self.active_element = noone;
@@ -70,9 +70,29 @@ function EmuCore(x, y, w, h, text) constructor {
     /// @ignore
     self.time_click_left_last = -10000;
     
+    self.update_script = function() { };
+    
+    self.refresh_script = function(data) { };
+    
     #region mutators
+    static SetUpdate = function(f) {
+        self.update_script = method(self, f);
+        return self;
+    };
+    
+    static SetRefresh = function(f) {
+        self.refresh_script = method(self, f);
+        return self;
+    };
+    
     static SetText = function(text) {
         self.text = text;
+        return self;
+    };
+    
+    static SetAlign = function(h, v) {
+        self.align.h = h;
+        self.align.v = v;
         return self;
     };
     
@@ -103,13 +123,13 @@ function EmuCore(x, y, w, h, text) constructor {
     
     static SetNext = function(element) {
         self.next = element;
-        if (self.next) self.next.previous = self;
+        if (is_struct(self.next)) self.next.previous = self;
         return self;
     };
     
     static SetPrevious = function(element) {
         self.previous = element;
-        if (self.previous) self.previous.next = self;
+        if (is_struct(self.previous)) self.previous.next = self;
         return self;
     };
     
@@ -166,20 +186,29 @@ function EmuCore(x, y, w, h, text) constructor {
             var thing = elements[i];
             thing.root = self;
             
-            if (thing.y == EMU_AUTO) {
+            if (is_ptr(thing.y) && thing.y == EMU_AUTO) {
                 var top = self.GetTop();
                 if (top) {
                     thing.y = top.y + top.GetHeight() + self.element_spacing_y;
                 } else {
                     thing.y = self.element_spacing_y;
                 }
-            } else if (thing.y == EMU_INLINE) {
+            } else if (is_ptr(thing.y) && thing.y == EMU_AUTO_NO_SPACING) {
+                var top = self.GetTop();
+                if (top) {
+                    thing.y = top.y + top.GetHeight();
+                } else {
+                    thing.y = self.element_spacing_y;
+                }
+            } else if (is_ptr(thing.y) && thing.y == EMU_INLINE) {
                 var top = self.GetTop();
                 if (top) {
                     thing.y = top.y;
                 } else {
                     thing.y = self.element_spacing_y;
                 }
+            } else if (is_ptr(thing.y) && thing.y == EMU_BASE) {
+                thing.y = self.element_spacing_y;
             }
             
             if (thing.identifier != "") {
@@ -209,6 +238,7 @@ function EmuCore(x, y, w, h, text) constructor {
     
     static Render = function(base_x = 0, base_y = 0) {
         self.gc.Clean();
+        self.update_script();
         self.processAdvancement();
         self.renderContents(self.x + base_x, self.y + base_y);
         return self;
@@ -222,6 +252,14 @@ function EmuCore(x, y, w, h, text) constructor {
     
     static Activate = function() {
         _emu_active_element(self);
+        return self;
+    };
+    
+    static Refresh = function(data) {
+        self.refresh_script(data);
+        for (var i = 0, n = array_length(self.contents); i < n; i++) {
+            self.contents[i].Refresh(data);
+        }
         return self;
     };
     #endregion
@@ -256,18 +294,24 @@ function EmuCore(x, y, w, h, text) constructor {
     static processAdvancement = function() {
         if (!self.isActiveElement()) return false;
         if (!self.override_tab && keyboard_check_pressed(vk_tab)) {
-            if (keyboard_check(vk_shift) && self.previous) {
-                self.previous.Activate();
+            if (keyboard_check(vk_shift) && self.previous != undefined) {
+                if (is_struct(self.previous))
+                    self.previous.Activate();
+                else if (self.GetSibling(self.previous))
+                    self.GetSibling(self.previous).Activate();
                 keyboard_clear(vk_tab);
                 return true;
             }
-            if (self.next) {
-                self.next.Activate();
+            if (self.next != undefined) {
+                if (is_struct(self.next))
+                    self.next.Activate();
+                else if (self.GetSibling(self.next))
+                    self.GetSibling(self.next).Activate();
                 keyboard_clear(vk_tab);
                 return true;
             }
         }
-    };
+    }
     
     /// @ignore
     static drawCheckerbox = function(x, y, w, h, xscale = 1, yscale = 1, color = c_white, alpha = 1) {

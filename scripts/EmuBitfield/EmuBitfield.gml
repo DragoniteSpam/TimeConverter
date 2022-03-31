@@ -84,6 +84,7 @@ function EmuBitfield(x, y, w, h, value, callback) : EmuCallback(x, y, w, h, "bit
     
     static Render = function(x, y) {
         self.gc.Clean();
+        self.update_script();
         self.processAdvancement();
         
         var x1 = self.x + x;
@@ -101,13 +102,13 @@ function EmuBitfieldOption(text, value, callback, eval) : EmuCallback(0, 0, 0, 0
     self.eval = method(self, eval);
     
     /// @ignore
-    self.color_hover = function() { return EMU_COLOR_HOVER };
+    self.color_hover = function() { return EMU_COLOR_HOVER; };
     /// @ignore
-    self.color_disabled = function() { return EMU_COLOR_DISABLED };
+    self.color_disabled = function() { return EMU_COLOR_DISABLED; };
     /// @ignore
-    self.color_active = function() { return EMU_COLOR_SELECTED };
+    self.color_active = function() { return EMU_COLOR_SELECTED; };
     /// @ignore
-    self.color_inactive = function() { return EMU_COLOR_BACK };
+    self.color_inactive = function() { return EMU_COLOR_BACK; };
     
     #region mutators
     static SetEval = function(eval) {
