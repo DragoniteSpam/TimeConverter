@@ -5,6 +5,7 @@ global.input_minutes = 0;
 global.input_seconds = 0;
 global.input_frames = 0;
 global.input_multiplier = 1;
+global.scaled_value = "0:00:00.00";
 
 container = new EmuCore(32, 32, 640, 640, "");
 
@@ -67,6 +68,11 @@ container.AddContent([
         frame_total = frame_total div 60;
         var hh = frame_total;
         
-        return format_time(hh) + ":" + format_time(mm) + ":" + format_time(ss) + ":" + format_time(ff);
+        global.scaled_value = format_time(hh) + ":" + format_time(mm) + ":" + format_time(ss) + ":" + format_time(ff);
+        
+        return global.scaled_value;
     }),
+    new EmuButton(32, EMU_AUTO, 256, 32, "Copy Timestamp", function() {
+        clipboard_set_text(global.scaled_value);
+    })
 ]);
